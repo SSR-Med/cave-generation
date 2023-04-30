@@ -127,6 +127,7 @@ def traveler(distance_matrix: list, relations: dict, num_rooms: int):
 
 
 def draw_map(width, height, map):
+    '''
     img = Image.new(mode="RGB", size=(width, height), color=(0, 0, 0))
     for row in range(height+1):
         for column in range(width+1):
@@ -136,18 +137,35 @@ def draw_map(width, height, map):
             elif map[row][column] == "-":
                 img.putpixel((column, row), (61, 183, 228))
     img.save("static/images/generation.jpg")
+    '''
+    char_width = width//10
+    char_height = height//10
+    width = char_width * width
+    height = char_height * height
+    image = Image.new("RGB", (width, height), color=(0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype("arial.ttf", size=char_height)
+    for i, row in enumerate(map):
+        for j, char in enumerate(row):
+            x = j * char_width
+            y = i * char_height
+            if char == "*" or char == "-" or char == "|":
+                draw.text((x, y), char, font=font, fill=(255, 255, 255))
+            else:
+                draw.text((x, y), char, font=font, fill=(0, 0, 0))
+    image.save("static/generation.jpg")
 
 
 def create_dungeon(size: str):
     # Check what size the user wants
     if size == "big":
-        width = 2000
-        height = 2000
+        width = 500
+        height = 500
     else:
-        width = 1000
-        height = 1000
+        width = 250
+        height = 250
     # How many rooms?
-    numRooms = width//100
+    numRooms = width//10
     # Create center rooms [[xi,yi]]
     center_rooms = create_points(width, height, numRooms)
     # Time to create the rooms
@@ -209,20 +227,24 @@ def create_dungeon(size: str):
             # Check if it is floor
             if map[row][column] == "*":
                 # Up, UpRight, Right, DownRight, Down, DownLeft, Left, UpLeft
-                movements = [(-1, 0), (-1, 1), (0, 1), (1, 1),
-                             (1, 0), (1, -1), (0, -1), (-1, -1)]
+                # movements = [(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)]
+                movements = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 for movement in movements:
                     # Check if it is inside the limits of the map
                     if 0 <= column+movement[1] <= 1000 and 0 <= row+movement[0] <= 1000:
+                        # If it is left/right -> |, else -
+                        if movement == (0, 1) or movement == (0, -1):
+                            changeChar = "|"
+                        else:
+                            changeChar = "-"
                         # If it is in the limit -> Wall
                         if column+movement[1] in (1000, 0) or row+movement[0] in (1000, 0):
-                            map[row+movement[0]][column+movement[1]] = "-"
+                            map[row+movement[0]][column +
+                                                 movement[1]] = changeChar
                         elif map[row+movement[0]][column+movement[1]] == "#":
-                            map[row+movement[0]][column+movement[1]] = "-"
+                            map[row+movement[0]][column +
+                                                 movement[1]] = changeChar  # If empty
 
     draw_map(width, height, map)
     map = "\n".join(["".join(element) for element in map])
     return map
-
-
-create_dungeon("small")
